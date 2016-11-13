@@ -23,25 +23,26 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.preference.Preference;
-import android.preference.PreferenceFragment;
+import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.SwitchPreference;
 import android.view.Menu;
 import android.view.MenuItem;
 
-public class TouchscreenGesturePreferenceFragment extends PreferenceFragment {
+public class TouchscreenGestureSettings extends PreferenceActivity {
     private static final String CATEGORY_AMBIENT_DISPLAY = "ambient_display_key";
     private SwitchPreference mFlipPref;
     private NotificationManager mNotificationManager;
     private boolean mFlipClick = false;
 
     @Override
-    public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.gesture_panel);
         PreferenceCategory ambientDisplayCat = (PreferenceCategory)
                 findPreference(CATEGORY_AMBIENT_DISPLAY);
         if (ambientDisplayCat != null) {
-            ambientDisplayCat.setEnabled(CMActionsSettings.isDozeEnabled(getActivity().getContentResolver()));
+            ambientDisplayCat.setEnabled(CMActionsSettings.isDozeEnabled(getContentResolver()));
         }
         if (Device.isSurnia()){
             //Check if we have to hide the chop chop entry
@@ -49,13 +50,13 @@ public class TouchscreenGesturePreferenceFragment extends PreferenceFragment {
             PreferenceCategory mCategory = (PreferenceCategory) findPreference("actions_key");
             mCategory.removePreference(chopChopPref);
         }
-        mNotificationManager = (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         mFlipPref = (SwitchPreference) findPreference("gesture_flip_to_mute");
         mFlipPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             public boolean onPreferenceClick(Preference preference) {
                 if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
                     mFlipPref.setChecked(false);
-                    new AlertDialog.Builder(getContext())
+                    new AlertDialog.Builder(TouchscreenGestureSettings.this)
                         .setTitle(getString(R.string.flip_to_mute_title))
                         .setMessage(getString(R.string.dnd_access))
                         .setNegativeButton(android.R.string.cancel, null)
@@ -78,8 +79,10 @@ public class TouchscreenGesturePreferenceFragment extends PreferenceFragment {
     }
 
     @Override
-    public void onResume() {
+    protected void onResume() {
         super.onResume();
+
+        getListView().setPadding(0, 0, 0, 0);
 
         if (mNotificationManager.isNotificationPolicyAccessGranted() && mFlipClick) {
             mFlipPref.setChecked(true);
